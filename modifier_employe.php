@@ -1,5 +1,9 @@
 <?php
 require "config.php";
+if (!isset($_SESSION['user'])) {
+    header("Location: login.php");
+    exit;
+}
 
 $id = $_GET['id'] ?? null;
 if (!$id) { die("Employé non trouvé."); }

@@ -1,5 +1,27 @@
 <?php
 require "config.php";
+if (!isset($_SESSION['user'])) {
+    header("Location: login.php");
+    exit;
+}
+
+
+/////////////////////////////////////////////// CREER ADMIN
+/*$username = 'admin';
+$password = 'admin123'; // à changer
+$role = 'admin';
+
+// Générer le hash sécurisé
+$hash = password_hash($password, PASSWORD_DEFAULT);
+
+$stmt = $pdo->prepare("INSERT INTO UTILISATEUR (username, password_hash, role) VALUES (?, ?, ?)");
+$stmt->execute([$username, $hash, $role]);
+
+echo "Admin créé avec succès !";
+*/
+
+
+
 
 /* =============================
    TABLEAU RÉCAP PROJETS/EMPLOYÉS
@@ -55,6 +77,10 @@ $employes = $pdo->query($sqlEmployes)->fetchAll(PDO::FETCH_ASSOC);
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <p>Connecté en tant que <?= htmlspecialchars($_SESSION['user']['username']) ?> 
+    (<?= $_SESSION['user']['role'] ?>) — 
+    <a href="logout.php">Se déconnecter</a></p>
+
     <meta charset="UTF-8">
     <title>Liste des Projets et Employés</title>
     <style>

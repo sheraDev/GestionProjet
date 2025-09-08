@@ -1,5 +1,9 @@
 <?php
 require 'config.php';
+if (!isset($_SESSION['user'])) {
+    header("Location: login.php");
+    exit;
+}
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 if (!$id) {
@@ -31,7 +35,7 @@ $stmt = $pdo->prepare("SELECT nomProj FROM PROJET WHERE idMgrProj = ?");
 $stmt->execute([$id]);
 $projectsManaged = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-$stmt = $pdo->prepare("SELECT idDept FROM MANAGE WHERE idEmp = ?");
+$stmt = $pdo->prepare("SELECT idDept FROM manage WHERE idEmp = ?");
 $stmt->execute([$id]);
 $deptsManaged = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
@@ -43,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($stmt->fetchColumn() > 0) {
         $error = "Cet employé gère encore au moins un projet. Réaffectez le manager avant suppression.";
     } else {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM MANAGE WHERE idEmp = ?");
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM manage WHERE idEmp = ?");
         $stmt->execute([$id]);
         if ($stmt->fetchColumn() > 0) {
             $error = "Cet employé est toujours manager d'un ou plusieurs départements. Réaffectez le manager avant suppression.";

@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 $host = "localhost"; 
 $db   = "GestionProjets";   
 $user = "root";         
@@ -10,4 +12,3 @@ try {
 } catch (PDOException $e) {
     die("Erreur de connexion : " . $e->getMessage());
 }
-?>
