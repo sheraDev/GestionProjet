@@ -18,7 +18,7 @@ if (!$mgr) { die("Manager introuvable."); }
 // Départements qu'il manage
 $sql2 = "
 SELECT d.nomDept
-FROM MANAGE m
+FROM manage m
 JOIN DEPARTEMENT d ON m.idDept = d.idDept
 WHERE m.idEmp = :id
 ";

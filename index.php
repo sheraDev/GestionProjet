@@ -1,7 +1,10 @@
 <?php
 require "config.php";
 
-$sql = "
+/* =============================
+   TABLEAU RÉCAP PROJETS/EMPLOYÉS
+   ============================= */
+$sqlRecap = "
 SELECT 
     p.nomProj,
     mp.idEmp AS idMgrProj,
@@ -16,33 +19,58 @@ SELECT
     dm.nomEmp AS managerEmploye,
     d.nomDept,
     pe.evalEmp
-FROM proj_employe pe
-JOIN PROJET p ON pe.nomProj = p.nomProj
-JOIN EMPLOYE e ON pe.idEmp = e.idEmp
-JOIN DEPARTEMENT d ON e.idDept = d.idDept
-JOIN manage m ON m.idDept = d.idDept
-JOIN EMPLOYE dm ON m.idEmp = dm.idEmp
+FROM PROJET p
 JOIN EMPLOYE mp ON p.idMgrProj = mp.idEmp
+LEFT JOIN proj_employe pe ON pe.nomProj = p.nomProj
+LEFT JOIN EMPLOYE e ON pe.idEmp = e.idEmp
+LEFT JOIN DEPARTEMENT d ON e.idDept = d.idDept
+LEFT JOIN manage m ON m.idDept = d.idDept
+LEFT JOIN EMPLOYE dm ON m.idEmp = dm.idEmp
 ORDER BY p.nomProj, e.nomEmp
 ";
-$data = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+$recap = $pdo->query($sqlRecap)->fetchAll(PDO::FETCH_ASSOC);
+
+/* =============================
+   TOUS LES PROJETS
+   ============================= */
+$sqlProjets = "
+SELECT p.nomProj, p.budget, p.dateDebut, mp.nomEmp AS manager
+FROM PROJET p
+JOIN EMPLOYE mp ON p.idMgrProj = mp.idEmp
+ORDER BY p.nomProj
+";
+$projets = $pdo->query($sqlProjets)->fetchAll(PDO::FETCH_ASSOC);
+
+/* =============================
+   TOUS LES EMPLOYÉS
+   ============================= */
+$sqlEmployes = "
+SELECT e.idEmp, e.nomEmp, e.salaire, d.nomDept
+FROM EMPLOYE e
+JOIN DEPARTEMENT d ON e.idDept = d.idDept
+ORDER BY e.nomEmp
+";
+$employes = $pdo->query($sqlEmployes)->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Liste des Projets</title>
+    <title>Liste des Projets et Employés</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; }
+        h1, h2 { margin-top: 40px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
         a { color: darkblue; text-decoration: none; }
         a:hover { text-decoration: underline; }
+        .actions a { margin-right: 10px; }
     </style>
 </head>
 <body>
-    <h1>Projets et Employés</h1>
+
+    <h1>Récapitulatif Projets et Employés</h1>
     <table>
         <thead>
             <tr>
@@ -60,38 +88,79 @@ $data = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($data as $row): ?>
+            <?php foreach ($recap as $row): ?>
             <tr>
-                <td>
-                    <a href="projet.php?nom=<?= urlencode($row['nomProj']) ?>">
-                        <?= htmlspecialchars($row['nomProj']) ?>
-                    </a>
-                </td>
-                <td>
-                    <a href="manager.php?id=<?= $row['idMgrProj'] ?>">
-                        <?= htmlspecialchars($row['managerProjet']) ?>
-                    </a>
-                </td>
-                <td><?= htmlspecialchars($row['idEmp']) ?></td>
-                <td>
-                    <a href="employe.php?id=<?= $row['idEmp'] ?>">
-                        <?= htmlspecialchars($row['nomEmp']) ?>
-                    </a>
-                </td>
-                <td><?= htmlspecialchars($row['heures']) ?></td>
-                <td><?= htmlspecialchars($row['budget']) ?></td>
-                <td><?= htmlspecialchars($row['dateDebut']) ?></td>
-                <td><?= htmlspecialchars($row['salaire']) ?></td>
-                <td>
-                    <a href="manager.php?id=<?= $row['idMgrEmp'] ?>">
-                        <?= htmlspecialchars($row['managerEmploye']) ?>
-                    </a>
-                </td>
-                <td><?= htmlspecialchars($row['nomDept']) ?></td>
-                <td><?= htmlspecialchars($row['evalEmp']) ?></td>
+                <td><?= htmlspecialchars($row['nomProj']) ?></td>
+                <td><?= htmlspecialchars($row['managerProjet']) ?></td>
+                <td><?= $row['idEmp'] ?? '-' ?></td>
+                <td><?= $row['nomEmp'] ?? '-' ?></td>
+                <td><?= $row['heures'] ?? '-' ?></td>
+                <td><?= $row['budget'] ?></td>
+                <td><?= $row['dateDebut'] ?></td>
+                <td><?= $row['salaire'] ?? '-' ?></td>
+                <td><?= $row['managerEmploye'] ?? '-' ?></td>
+                <td><?= $row['nomDept'] ?? '-' ?></td>
+                <td><?= $row['evalEmp'] ?? '-' ?></td>
             </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
+
+    <h2>Gestion des Projets</h2>
+    <p><a href="ajouter_projet.php">➕ Ajouter un projet</a></p>
+    <table>
+        <thead>
+            <tr>
+                <th>Projet</th>
+                <th>Manager</th>
+                <th>Budget</th>
+                <th>Date Début</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($projets as $p): ?>
+            <tr>
+                <td><?= htmlspecialchars($p['nomProj']) ?></td>
+                <td><?= htmlspecialchars($p['manager']) ?></td>
+                <td><?= htmlspecialchars($p['budget']) ?></td>
+                <td><?= htmlspecialchars($p['dateDebut']) ?></td>
+                <td class="actions">
+                    <a href="modifier_projet.php?nom=<?= urlencode($p['nomProj']) ?>">✏️ Modifier</a>
+                    <a href="supprimer_projet.php?nom=<?= urlencode($p['nomProj']) ?>" onclick="return confirm('Supprimer ce projet ?')">🗑️ Supprimer</a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <h2>Gestion des Employés</h2>
+    <p><a href="ajouter_employe.php">➕ Ajouter un employé</a></p>
+    <table>
+        <thead>
+            <tr>
+                <th>ID Employé</th>
+                <th>Nom</th>
+                <th>Salaire</th>
+                <th>Département</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($employes as $e): ?>
+            <tr>
+                <td><?= $e['idEmp'] ?></td>
+                <td><?= htmlspecialchars($e['nomEmp']) ?></td>
+                <td><?= htmlspecialchars($e['salaire']) ?></td>
+                <td><?= htmlspecialchars($e['nomDept']) ?></td>
+                <td class="actions">
+                    <a href="modifier_employe.php?id=<?= $e['idEmp'] ?>">✏️ Modifier</a>
+                    <a href="supprimer_employe.php?id=<?= $e['idEmp'] ?>" onclick="return confirm('Supprimer cet employé ?')">🗑️ Supprimer</a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
 </body>
 </html>
